@@ -26,10 +26,14 @@ for folder in os.listdir('messages'):
             raw_docs += [message["Contents"] for message in messages]
 
 # Limit the messages to ASCII text only, for a smaller model and faster training.
-docs = [doc for doc in raw_docs if all(c.isascii() and (c.isprintable() or c.isspace()) for c in doc)]
+cleaned_docs = [doc for doc in raw_docs if all(c.isascii() and (c.isprintable() or c.isspace()) for c in doc)]
+
+# Remove duplicates (which are mostly short) to encourage longer and more diverse responses.
+unique_docs = set(cleaned_docs)
+docs = list(unique_docs)
 
 random.shuffle(docs)
-print(f"Using {len(docs)} of {len(raw_docs)} total")
+print(f"Using {len(docs)} of {len(raw_docs)} total ({len(cleaned_docs)} clean)")
 doc_len = [len(doc) for doc in docs]
 print(f"Document length min={min(doc_len)} med={statistics.median(doc_len)} avg={statistics.mean(doc_len):.2f} max={max(doc_len)}")
 

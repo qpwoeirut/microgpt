@@ -5,12 +5,15 @@ Everything else is just efficiency.
 
 @karpathy
 """
-
-import os  # os.path.exists
-import math  # math.log, math.exp
-import random  # random.seed, random.choices, random.gauss, random.shuffle
+import datetime
+import json
+import math
+import os
+import random
 
 random.seed(42)  # Let there be order among chaos
+start_time = datetime.datetime.now().isoformat()
+print(f"Started run at {start_time}")
 
 # Let there be a Dataset `docs`: list[str] of documents (e.g. a list of names)
 if not os.path.exists('input.txt'):
@@ -215,6 +218,16 @@ for step in range(num_steps):
         p.grad = 0
 
     print(f"step {step + 1:4d} / {num_steps:4d} | loss {loss.data:.4f}")
+
+    # Basic checkpointing
+    if step > 0 and step % 100 == 0:
+        os.makedirs("checkpoints", exist_ok=True)
+        with open(f"checkpoints/{start_time}_{str(step).zfill(4)}.json", 'w') as f:
+            raw_state = {
+                k: [[val.data for val in row] for row in mat]
+                for k, mat in state_dict.items()
+            }
+            json.dump({"tokens": uchars, "state": raw_state}, f)
 
 # Inference: may the model babble back to us
 temperature = 0.5  # in (0, 1], control the "creativity" of generated text, low to high

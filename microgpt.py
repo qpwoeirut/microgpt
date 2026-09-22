@@ -10,6 +10,7 @@ import json
 import math
 import os
 import random
+import statistics
 
 random.seed(42)  # Let there be order among chaos
 start_time = datetime.datetime.now().isoformat()
@@ -29,6 +30,8 @@ docs = [doc for doc in raw_docs if all(c.isascii() and (c.isprintable() or c.iss
 
 random.shuffle(docs)
 print(f"Using {len(docs)} of {len(raw_docs)} total")
+doc_len = [len(doc) for doc in docs]
+print(f"Document length min={min(doc_len)} med={statistics.median(doc_len)} avg={statistics.mean(doc_len):.2f} max={max(doc_len)}")
 
 # Let there be a Tokenizer to translate strings to sequences of integers ("tokens") and back
 uchars = sorted(set(''.join(docs)))  # unique characters in the dataset become token ids 0..n-1
@@ -109,7 +112,7 @@ class Value:
 # Initialize the parameters, to store the knowledge of the model
 n_layer = 1  # depth of the transformer neural network (number of layers)
 n_embd = 16  # width of the network (embedding dimension)
-block_size = 16  # maximum context length of the attention window (note: the longest name is 15 characters)
+block_size = 256  # maximum context length of the attention window
 n_head = 4  # number of attention heads
 head_dim = n_embd // n_head  # derived dimension of each head
 matrix = lambda nout, nin, std=0.08: [[Value(random.gauss(0, std)) for _ in range(nin)] for _ in range(nout)]
@@ -236,7 +239,7 @@ for step in range(num_steps):
 
 # Inference: may the model babble back to us
 temperature = 0.5  # in (0, 1], control the "creativity" of generated text, low to high
-print("\n--- inference (new, hallucinated names) ---")
+print("\n--- inference (new, hallucinated Discord messages) ---")
 for sample_idx in range(20):
     keys, values = [[] for _ in range(n_layer)], [[] for _ in range(n_layer)]
     token_id = BOS

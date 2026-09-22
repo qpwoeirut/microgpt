@@ -15,15 +15,20 @@ random.seed(42)  # Let there be order among chaos
 start_time = datetime.datetime.now().isoformat()
 print(f"Started run at {start_time}")
 
-# Let there be a Dataset `docs`: list[str] of documents (e.g. a list of names)
-if not os.path.exists('input.txt'):
-    import urllib.request
+raw_docs = []
+# Be lazy and assume the DiscordData messages folder has been extracted into the project
+for folder in os.listdir('messages'):
+    # Basic check to see if it's the right format
+    if folder.startswith('c') and folder[1:].isdigit():
+        with open(f'messages/{folder}/messages.json') as f:
+            messages = json.load(f)
+            raw_docs += [message["Contents"] for message in messages]
 
-    names_url = 'https://raw.githubusercontent.com/karpathy/makemore/988aa59/names.txt'
-    urllib.request.urlretrieve(names_url, 'input.txt')
-docs = [line.strip() for line in open('input.txt') if line.strip()]
+# Limit the messages to ASCII text only, for a smaller model and faster training.
+docs = [doc for doc in raw_docs if all(c.isascii() and (c.isprintable() or c.isspace()) for c in doc)]
+
 random.shuffle(docs)
-print(f"num docs: {len(docs)}")
+print(f"Using {len(docs)} of {len(raw_docs)} total")
 
 # Let there be a Tokenizer to translate strings to sequences of integers ("tokens") and back
 uchars = sorted(set(''.join(docs)))  # unique characters in the dataset become token ids 0..n-1

@@ -11,6 +11,7 @@ import math
 import os
 import random
 import statistics
+import string
 
 random.seed(42)  # Let there be order among chaos
 start_time = datetime.datetime.now().isoformat()
@@ -25,8 +26,13 @@ for folder in os.listdir('messages'):
             messages = json.load(f)
             raw_docs += [message["Contents"] for message in messages]
 
-# Limit the messages to ASCII text only, for a smaller model and faster training.
-cleaned_docs = [doc for doc in raw_docs if all(c.isascii() and (c.isprintable() or c.isspace()) for c in doc)]
+MAX_LENGTH = 64
+cleaned_docs = [
+    doc for doc in raw_docs
+    # Limit the messages to lowercase letters and space, for a smaller model and faster training.
+    # Remove very long or very short messages.
+    if set(doc) <= set(string.ascii_lowercase + ' ') and 8 <= len(doc) <= MAX_LENGTH
+]
 
 # Remove duplicates (which are mostly short) to encourage longer and more diverse responses.
 unique_docs = set(cleaned_docs)
@@ -114,10 +120,11 @@ class Value:
 
 
 # Initialize the parameters, to store the knowledge of the model
-n_layer = 1  # depth of the transformer neural network (number of layers)
-n_embd = 16  # width of the network (embedding dimension)
-block_size = 256  # maximum context length of the attention window
-n_head = 4  # number of attention heads
+n_layer = 2  # depth of the transformer neural network (number of layers)
+n_embd = 32  # width of the network (embedding dimension)
+block_size = MAX_LENGTH  # maximum context length of the attention window
+n_head = 16  # number of attention heads
+print(f"{n_layer = } {n_embd = } {block_size = } {n_head = }")
 head_dim = n_embd // n_head  # derived dimension of each head
 matrix = lambda nout, nin, std=0.08: [[Value(random.gauss(0, std)) for _ in range(nin)] for _ in range(nout)]
 state_dict = {'wte': matrix(vocab_size, n_embd), 'wpe': matrix(block_size, n_embd),
@@ -197,7 +204,7 @@ m = [0.0] * len(params)  # first moment buffer
 v = [0.0] * len(params)  # second moment buffer
 
 # Repeat in sequence
-num_steps = 1000  # number of training steps
+num_steps = 10000  # number of training steps
 for step in range(num_steps):
 
     # Take single document, tokenize it, surround it with BOS special token on both sides

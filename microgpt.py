@@ -5,6 +5,7 @@ Everything else is just efficiency.
 
 @karpathy
 """
+import csv
 import datetime
 import json
 import math
@@ -18,20 +19,36 @@ start_time = datetime.datetime.now().isoformat()
 print(f"Started run at {start_time}")
 
 raw_docs = []
-# Be lazy and assume the DiscordData messages folder has been extracted into the project
-for folder in os.listdir('messages'):
-    # Basic check to see if it's the right format
-    if folder.startswith('c') and folder[1:].isdigit():
-        with open(f'messages/{folder}/messages.json') as f:
-            messages = json.load(f)
-            raw_docs += [message["Contents"] for message in messages]
+with open("SUB-IP-EST2025-ANNRNK.csv", encoding="utf-8") as file:
+    # Skip the title/description of the CSV file.
+    next(file)
+    next(file)
 
-MAX_LENGTH = 30
+    dict_reader = csv.DictReader(file)
+    for row in dict_reader:
+        city_name = row["Geographic Area"]
+        if not city_name:
+            continue
+
+        # Clean up a bunch of suffixes in the names.
+        # Also, apparently some of these are city-counties? I suppose it doesn't matter much for this project.
+        for suffix in ("city", "village", "municipality", "borough", "town", "urban county", "CDP", "County"):
+            city_name = city_name.replace(f" {suffix} (balance), ", ", ")
+            city_name = city_name.replace(f" {suffix}, ", ", ")
+        for gov_suffix in ("metropolitan", "metro", "consolidated", "unified"):
+            city_name = city_name.replace(f" {gov_suffix} government (balance), ", ", ")
+        city_name = city_name.replace(" (balance), ", ", ")
+
+        # If only they could just make the type of settlement another column or something...
+        assert row["Geographic Area"] != city_name or "Carson City" in city_name or "Princeton" in city_name, f"{row['Geographic Area'] = } {city_name = }"
+        raw_docs.append(city_name.lower())
+
+MAX_LENGTH = 20
 cleaned_docs = [
     doc for doc in raw_docs
     # Limit the messages to lowercase letters and space, for a smaller model and faster training.
     # Remove very long or very short messages.
-    if set(doc) <= set(string.ascii_lowercase + ' ') and 8 <= len(doc) <= MAX_LENGTH
+    if set(doc) <= set(string.ascii_lowercase + ', ') and len(doc) <= MAX_LENGTH
 ]
 
 # Remove duplicates (which are mostly short) to encourage longer and more diverse responses.
@@ -42,6 +59,7 @@ random.shuffle(docs)
 print(f"Using {len(docs)} of {len(raw_docs)} total ({len(cleaned_docs)} clean)")
 doc_len = [len(doc) for doc in docs]
 print(f"Document length min={min(doc_len)} med={statistics.median(doc_len)} avg={statistics.mean(doc_len):.2f} max={max(doc_len)}")
+print("Sample docs:", *docs[:5], sep='\n')
 
 # Let there be a Tokenizer to translate strings to sequences of integers ("tokens") and back
 uchars = sorted(set(''.join(docs)))  # unique characters in the dataset become token ids 0..n-1
@@ -204,7 +222,7 @@ m = [0.0] * len(params)  # first moment buffer
 v = [0.0] * len(params)  # second moment buffer
 
 # Repeat in sequence
-num_steps = 10000  # number of training steps
+num_steps = 1000  # number of training steps
 for step in range(num_steps):
 
     # Take single document, tokenize it, surround it with BOS special token on both sides

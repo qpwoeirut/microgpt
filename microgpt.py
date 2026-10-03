@@ -26,7 +26,7 @@ for folder in os.listdir('messages'):
             messages = json.load(f)
             raw_docs += [message["Contents"] for message in messages]
 
-MAX_LENGTH = 64
+MAX_LENGTH = 30
 cleaned_docs = [
     doc for doc in raw_docs
     # Limit the messages to lowercase letters and space, for a smaller model and faster training.
@@ -121,7 +121,7 @@ class Value:
 
 # Initialize the parameters, to store the knowledge of the model
 n_layer = 2  # depth of the transformer neural network (number of layers)
-n_embd = 32  # width of the network (embedding dimension)
+n_embd = 64  # width of the network (embedding dimension)
 block_size = MAX_LENGTH  # maximum context length of the attention window
 n_head = 16  # number of attention heads
 print(f"{n_layer = } {n_embd = } {block_size = } {n_head = }")

@@ -258,8 +258,8 @@ for step in range(num_steps):
 
     # Basic checkpointing
     if step > 0 and step % 100 == 0:
-        os.makedirs("checkpoints", exist_ok=True)
-        with open(f"checkpoints/{start_time}_{str(step).zfill(4)}.json", 'w') as f:
+        os.makedirs("baseline/checkpoints", exist_ok=True)
+        with open(f"baseline/checkpoints/{start_time}_{str(step).zfill(4)}.json", 'w') as f:
             raw_state = {
                 k: [[val.data for val in row] for row in mat]
                 for k, mat in state_dict.items()

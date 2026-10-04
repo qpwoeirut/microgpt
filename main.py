@@ -238,7 +238,7 @@ class Model:
         output = ""
         token = delimiter
         keys, values = [[] for _ in self.layers], [[] for _ in self.layers]
-        for pos in range(MAX_LENGTH):
+        for pos in range(self.context_window):
             logits, keys, values = self.infer(token, pos, keys, values)
             probs = [val.data for val in softmax(logits)]
             token = random.choices(range(self.n_tokens), weights=probs)[0]
@@ -257,7 +257,7 @@ class Model:
         keys, values = [[] for _ in self.layers], [[] for _ in self.layers]
 
         losses = []
-        n = min(MAX_LENGTH, len(tokens) - 1)
+        n = min(self.context_window, len(tokens) - 1)
         for i in range(n):
             logits, keys, values = self.infer(tokens[i], i, keys, values)
             probs = softmax(logits)

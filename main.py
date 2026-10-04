@@ -233,14 +233,14 @@ class Model:
         logits = linear(embedding, self.lm_head)
         return logits, keys, values
 
-    def generate(self) -> str:
+    def generate(self, temperature: float) -> str:
         delimiter = len(self.tokens)
         output = ""
         token = delimiter
         keys, values = [[] for _ in self.layers], [[] for _ in self.layers]
         for pos in range(self.context_window):
             logits, keys, values = self.infer(token, pos, keys, values)
-            probs = [val.data for val in softmax(logits)]
+            probs = [val.data for val in softmax([l / temperature for l in logits])]
             token = random.choices(range(self.n_tokens), weights=probs)[0]
             if token == delimiter:
                 break
@@ -300,7 +300,7 @@ def main():
         print(f"[{datetime.datetime.now().isoformat()}] step {step + 1:4d} / {STEPS:4d} | loss {loss.data:.4f}")
 
     for _ in range(20):
-        print(model.generate())
+        print(model.generate(temperature=0.5))
 
 
 if __name__ == '__main__':

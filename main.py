@@ -225,6 +225,7 @@ class Model:
         token_embedding = [self.tok_embed[i][token_id] for i in range(self.n_embed)]
         position_embedding = [self.pos_embed[i][position] for i in range(self.n_embed)]
         embedding = add_embeddings(token_embedding, position_embedding)
+        embedding = rmsnorm(embedding)
 
         for i_layer, layer in enumerate(self.layers):
             embedding, keys[i_layer], values[i_layer] = layer.adjust(embedding, keys[i_layer], values[i_layer])
